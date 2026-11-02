@@ -408,10 +408,13 @@ function UserDashboardContent() {
         setShowEditForm(null);
         await loadData();
       } else {
-        showToast(result.message || "Error", "error");
+        // Keep the modal open so the edit is not lost, and show the real reason
+        // the server returned instead of a generic failure.
+        showToast(result.message || "The entry could not be updated.", "error");
       }
-    } catch {
-      showToast("Connection error", "error");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      showToast(message || "Connection error", "error");
     }
   };
 
@@ -1036,7 +1039,11 @@ function UserDashboardContent() {
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-5" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={(e) => { if (e.target === e.currentTarget) setShowEditForm(null); }}>
           <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-xl p-6 shadow-2xl" style={{ background: "var(--surface)" }}>
             <h2 className="text-base font-bold pb-3.5 mb-4" style={{ color: "var(--text)", borderBottom: "1px solid var(--border)" }}>Edit Entry</h2>
+            {/* The key remounts the form for the chosen entry, so the fields
+                always start from that entry's current values instead of
+                whatever was typed during an earlier edit. */}
             <EnquiryForm
+              key={showEditForm.entryId}
               salesPersons={salesPersons}
               companies={companies}
               initialData={showEditForm.entry}
